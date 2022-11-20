@@ -146,8 +146,8 @@ let pOO_FS=(()=>{
 		//⊥(x_) => ⊥(x[n]) (a is Lim)
 		//⊥(0 ) => [(_REC_(0),0)] (a is Lim)
 		//⊥(x+) => [(_REC_(⊥(x)),0)] (a is Lim)
-		if(n==0)return is_zero(x) ? [] : [-1,at(x,n,a0)]
-		return [[at(a,n-1,a0),[]]]
+		if(n==0)return is_zero(x) ? [] : [-1,at(x,n)]
+		return [[at(a,n-1),[]]]
 	}
 	let xy = a[a.length-1]
 	let x = xy[0]
@@ -183,7 +183,7 @@ let pOO_FS=(()=>{
 })()
 register.push({
    id:'pOO_Tree'
-   ,name:'ψ(Ω_Ω) Tree'
+   ,name:'??? Tree'
    ,display:a=>pOO_tree_display_expr(a)
    ,able:is_lim
    ,compare:tree_compare
