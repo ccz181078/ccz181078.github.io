@@ -142,11 +142,11 @@ let pOO_FS=(()=>{
 	if(is_zero(a))return a
 	if(is_fixpoint(a)){
 		let x = a[1]
-		if(is_lim(x))return [-1,at(x,n,x)]
+		if(is_lim(x))return [-1,at(x,n,a0)]
 		//⊥(x_) => ⊥(x[n]) (a is Lim)
 		//⊥(0 ) => [(_REC_(0),0)] (a is Lim)
-		//⊥(x+) => [(_REC_(⊥(x)),0)] (a is Lim)???
-		if(n==0)return is_zero(x) ? [] : [-1,at(x,n,x)]
+		//⊥(x+) => [(_REC_(⊥(x)),0)] (a is Lim)
+		if(n==0)return is_zero(x) ? [] : [-1,at(x,n,a0)]
 		return [[at(a,n-1,a0),[]]]
 	}
 	let xy = a[a.length-1]
@@ -168,9 +168,8 @@ let pOO_FS=(()=>{
 			a1.push([x0(),rec()])                  //[...(x+,y+)] => [...(x+,y)(x,_REC_(0))] (a is Lim)
 		}
 	}else{
-		if(a==a0&&a.length==1&&is_fixpoint(x))a1=x //(a is Suc)
-		else if(x.length==1&&is_fixpoint(x[0][0])&&is_zero(x[0][1]))a1.push([x[0][0],rec()])
-		else if(is_lim(x))a1.push([x0(),[]])            //[...(x_,0 )] => [...(x[n],0)] (a is Lim)
+		if(a.length==1&&is_fixpoint(x))a1=x        //[(⊥(c),0)] => ⊥(c) (a is Suc)
+		else if(is_lim(x))a1.push([x0(),[]])       //[...(x_,0 )] => [...(x[n],0)] (a is Lim)
 		else if(!is_zero(x))a1.push([x0(),rec()])  //[...(x+,0 )] => [...(x,_REC_(0))] (a is Lim)
 		                                           //[...(0 ,0 )] => [...] (a is Suc)
 	}
