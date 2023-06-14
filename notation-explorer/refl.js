@@ -1,5 +1,18 @@
 ;
 (()=>{
+let dbg=(x)=>{
+	//console.log(x)
+}
+let flat=(x)=>{
+	if(x===0)return []
+	if(x instanceof Array && x.length==3){
+		let y=flat(x[0])
+		y.push(x[1])
+		y.push(x[2])
+		return y
+	}
+	throw Exception()
+}
 let cmp=(m1,m2)=>{
 	if(m1===Infinity){
 		if(m2===Infinity)return 0
@@ -7,14 +20,16 @@ let cmp=(m1,m2)=>{
 	}else if(m2===Infinity){
 		return -1
 	}
-	if((typeof m1)=='number'){
-		if((typeof m2)=='number'){
-			return m1<m2?-1:m2<m1?1:0
+	if(m1===0){
+		if(m2===0){
+			return 0
 		}
 		return -1
-	}else if((typeof m2)=='number'){
+	}else if(m2===0){
 		return 1
 	}
+	m1=flat(m1)
+	m2=flat(m2)
 	for(let i=0;i<Math.min(m1.length,m2.length);++i){
 		let x=cmp(m1[i],m2[i])
 		if(x!=0)return x
@@ -28,28 +43,34 @@ let makeFS=(dom_,fs_)=>{
 		dom:dom_,
 		fs:(n)=>{
 			if(cmp(n,dom_)<0)return fs_(n)
-			console.log(to_str(n)+' < '+to_str(dom_)+' : '+cmp(n,dom_))
+			dbg(to_str(n)+' < '+to_str(dom_)+' : '+cmp(n,dom_))
 			throw Exception()
 		}
 	}
+}
+let to_nat=(x)=>{
+	if(x instanceof Array && x.length==3){
+		let b=x[0]
+		let a=x[1]
+		let c=x[2]
+		if(b===0 && a===0){
+			return to_nat(c)+1
+		}
+		throw Exception()
+	}
+	if(x===0)return 0
+	throw Exception()
 }
 let iter=(f,n,x)=>{
 	for(let i=0;i<n;++i){x=f(x)}
 	return x
 }
-let is_nat=(x)=>{
-	return ((typeof x)=='number') && x>=0 && Number.isInteger(x)
-}
 let expr=(b,a,c)=>{
-	if(c===0)return b
-	if(b===0 && a===0 && is_nat(c))return c
 	return [b,a,c]
 }
 let inc=(x,y)=>{
-	if(is_nat(x)){
-		if(y===0)return x+1
-		if(x===0)return expr(0,y,1)
-		throw Exception()
+	if(x===0){
+		return expr(0,y,0)
 	}
 	if(x instanceof Array && x.length==3){
 		let b=x[0]
@@ -57,41 +78,57 @@ let inc=(x,y)=>{
 		let c=x[2]
 		let sgn=cmp(a,y)
 		if(sgn<0){
-			console.log('inc: '+to_str(x)+' '+to_str(y)+'  sgn='+sgn)
+			dbg('inc: '+to_str(x)+' '+to_str(y)+'  sgn='+sgn)
 			throw Exception()
 		}
 		if(sgn===0){
 			return expr(b,a,inc(c,0))
 		}
-		return expr(expr(b,a,c),y,1)
+		return expr(expr(b,a,c),y,0)
 	}
 	throw Exception()
 }
-let w=expr(0,0,expr(0,1,1))
+let one=expr(0,0,0)
+let w=expr(0,0,expr(0,one,0))
+/*
+b(a,0-1)=b
+b(a,c+1-1)=b(a,c)
+*/
+let dec=(b,a,c,f1,f2)=>{
+	dbg('dec '+to_str(b)+' '+to_str(a)+' '+to_str(c))
+	let c_=expr_FS(c)
+	if(c_.dom===0){
+		return f1(b)
+	}
+	if(cmp(c_.dom,one)===0){
+		return f1(expr(b,a,c_.fs(0)))
+	}
+	return f2(c_)
+}
 /*
 cf(a)=1
-	p(b(a,d+1),c) = b(a,d)(a[0],c)
-cf(a)>1, c<cf(a)
-	p(b(a,d+1),c) = b(a,d)(a[c],1)
+	p(b(a,c),n) = b(a,c-1)(a[0],n)
+cf(a)>1, n<cf(a)
+	p(b(a,c),n) = b(a,c-1)(a[n],0)
 */
 let p=(x,n)=>{
-	if(is_nat(x)){
-		x=[0,0,x]
-	}
+	dbg('p '+to_str(x)+' '+to_str(n))
 	if(x instanceof Array && x.length==3){
 		let b=x[0]
 		let a=x[1]
 		let c=x[2]
-		let c_=expr_FS(c)
-		if(c_.dom===1){
-			let a_=expr_FS(a)
-			if(a_.dom===0)throw Exception()
-			if(a_.dom===1){
-				return expr(expr(b,a,c_.fs(0)),a_.fs(0),n)
+		let ret=dec(b,a,c,(y)=>{
+			let a_=Aexpr_FS(a)
+			if(cmp(a_.dom,one)===0){
+				return expr(y,a_.fs(0),n)
 			}
-			return expr(expr(b,a,c_.fs(0)),a_.fs(c),1)
-		}
-		throw Exception()
+			dbg('fs '+to_str(a)+' '+to_str(n)+' = '+to_str(a_.fs(n)))
+			return expr(y,a_.fs(n),0)
+		},(c_)=>{
+			throw Exception()
+		})
+		dbg('p '+to_str(x)+' '+to_str(n)+' = '+to_str(ret))
+		return ret
 	}
 	throw Exception()
 }
@@ -99,83 +136,47 @@ let p=(x,n)=>{
 in A expr
 设 x = b(a,c)
 
-cf(c)=1
+cf(c)≤1
 	cf(a)=0
-		x[0] = b(a,c[0]), cf(x)=1
+		x[0] = b(a,c-1), cf(x)=1
 	cf(a)=1
-		x[n] = b(a,c[0])(a[0],n), cf(x)=A
+		x[n] = b(a,c-1)(a[0],n), cf(x)=A
 	cf(a)>1
-		x[n] = b(a,c[0])(a[n],1), cf(x)=cf(a)
+		x[n] = b(a,c-1)(a[n],0), cf(x)=cf(a)
 cf(c)>1
 	x[n] = b(a,c[n]), cf(x)=cf(c)
 */
-let nat_FS=(x)=>{
-	if(is_nat(x)){
-		if(x===0){
-			return makeFS(0,(n)=>{throw Exception()})
-		}
-		return makeFS(1,(n)=>x-1)
-	}
-	console.log(to_str(x)+' is not nat')
-	throw Exception()
-}
 let Aexpr_FS=(x)=>{
+	dbg('Aexpr_FS '+to_str(x))
 	if(x instanceof Array && x.length==3){
 		let b=x[0]
 		let a=x[1]
 		let c=x[2]
-		let c_=expr_FS(c)
-		if(c_.dom===0)throw Exception()
-		if(c_.dom===1){
+		let ret=dec(b,a,c,(y)=>{
 			let a_=Aexpr_FS(a)
 			if(a_.dom===0){
-				return makeFS(1,(n)=>expr(b,a,c_.fs(0)))
+				return makeFS(one,(n)=>y)
 			}
-			if(a_.dom===1){
-				return makeFS(Infinity,(n)=>expr(expr(b,a,c_.fs(0)),a_.fs(0),n))
+			if(cmp(a_.dom,one)===0){
+				return makeFS(Infinity,(n)=>expr(y,a_.fs(0),n))
 			}
-			return makeFS(a_.dom,(n)=>expr(expr(b,a,c_.fs(0)),a_.fs(n),1))
-		}
-		return makeFS(c_.dom,(n)=>expr(b,a,c_.fs(n)))
-	}
-	return nat_FS(x)
-}
-let expr_FS=(x)=>{
-	if(x===Infinity){
-		return makeFS(w,(n)=>expr(0,0,iter((t)=>expr(0,t,1),n,0)))
-	}
-	if(x instanceof Array && x.length==3){
-		let b=x[0]
-		let a=x[1]
-		let c=x[2]
-		let c_=expr_FS(c)
-		if(c_.dom===0)throw Exception()
-		if(c_.dom===1){
-			let a_=Aexpr_FS(a)
-			if(a_.dom===0){
-				return makeFS(1,(n)=>expr(b,a,c_.fs(0)))
-			}
-			if(a_.dom===1||a_.dom===Infinity){
-				return makeFS(x,(n)=>n)
-			}
-			if(cmp(a_.dom,x)<0){
-				return makeFS(a_.dom,(n)=>p(x,n))
-			}
-			return makeFS(w,(n)=>iter((t)=>p(x,p(a_.dom,t)),n,0))
-		}
-		let y=inc(b,inc(a,0))
-		if(cmp(c_.dom,y)<0){
+			return makeFS(a_.dom,(n)=>expr(y,a_.fs(n),0))
+		},(c_)=>{
 			return makeFS(c_.dom,(n)=>expr(b,a,c_.fs(n)))
-		}
-		return makeFS(w,(n)=>p(y,iter((t)=>c_.fs(p(c_.dom,t)),n,0)))
+		})
+		dbg('Acf '+to_str(x)+' = '+to_str(ret.dom))
+		return ret
 	}
-	return nat_FS(x)
+	if(x===0){
+		return makeFS(0,(n)=>{throw Exception()})
+	}
+	throw Exception()
 }
 /*
 设 x = b(a+1,d)(a,c)
-cf(c)=1
+cf(c)≤1
 	cf(a)=0
-		x[0] = b(a+1,d)(a,c[0]), cf(x)=1
+		x[0] = b(a+1,d)(a,c-1), cf(x)=1
 	cf(a)∈{1,A}
 		x[n] = n, cf(x)=x
 	1<cf(a)<x
@@ -189,6 +190,40 @@ cf(c)≥b(a+1,d+1)
 	x[n] = p(b(a+1,d+1), t(n)), cf(x)=ω
 	t(0)=0, t(n+1)=c[p(cf(c),t(n))]
 */
+let expr_FS=(x)=>{
+	dbg('expr_FS '+to_str(x))
+	if(x===Infinity){
+		return makeFS(w,(n)=>expr(0,0,iter((t)=>expr(0,t,0),to_nat(n),0)))
+	}
+	if(x instanceof Array && x.length==3){
+		let b=x[0]
+		let a=x[1]
+		let c=x[2]
+		return dec(b,a,c,(y)=>{
+			let a_=Aexpr_FS(a)
+			if(a_.dom===0){
+				return makeFS(one,(n)=>y)
+			}
+			if(cmp(a_.dom,one)===0||a_.dom===Infinity){
+				return makeFS(x,(n)=>n)
+			}
+			if(cmp(a_.dom,x)<0){
+				return makeFS(a_.dom,(n)=>p(x,n))
+			}
+			return makeFS(w,(n)=>iter((t)=>p(x,p(a_.dom,t)),to_nat(n),0))
+		},(c_)=>{
+			let y=inc(b,inc(a,0))
+			if(cmp(c_.dom,y)<0){
+				return makeFS(c_.dom,(n)=>expr(b,a,c_.fs(n)))
+			}
+			return makeFS(w,(n)=>p(y,iter((t)=>c_.fs(p(c_.dom,t)),to_nat(n),0)))
+		})
+	}
+	if(x===0){
+		return makeFS(0,(n)=>{throw Exception()})
+	}
+	throw Exception()
+}
 let to_str=(x)=>{
 	if(x instanceof Array && x.length==3){
 		let y=x.map(to_str)
@@ -200,7 +235,7 @@ let refl_is_lim=(x,n)=>{
 	return cmp(w,expr_FS(x).dom)===0
 }
 let refl_FS=(x,n)=>{
-	return expr_FS(x).fs(n)
+	return expr_FS(x).fs(iter((t)=>expr(0,0,t),n,0))
 }
 register.push({
    id:'refl_Tree'
