@@ -2,7 +2,8 @@
    var res,n=0
    while(true){
       res = FS(seq,n)
-      if(compare(res,low[0])>0) return res
+      if(res===undefined) throw 0
+	  if(compare(res,low[0])>0) return res
       n++
    }
 }
@@ -78,18 +79,23 @@ register.forEach((notation,index)=>{
             var expand_extra = item=>{
                var working_low = item.low
                for(var i=this.$root.extra_FS[index];i--;){
+				  try{
                   item.subitems.unshift({
                      expr:FSbounded(this.FS,this.compare,item.expr,working_low)
                      ,low:JSON.parse(JSON.stringify(working_low))
                      ,subitems:[]
                   })
                   working_low = [item.subitems[0].expr]
+			      }catch(e){
+				      if(e!==0)throw e
+			      }
                }
                if(item.subitems[0]) item.low[0] = item.subitems[0].expr
             }
             ,expand_tier = (tier,item,append)=>{
                if(!(this.able(item.expr)&&extras.add(item)||this.semiable&&this.semiable(item.expr)&&this.compare(this.FS(item.expr,0),item.low[0])>0)) return;
-               var newitem={
+               try{
+			   var newitem={
                   expr:FSbounded(this.FS,this.compare,item.expr,item.low)
                   ,low:JSON.parse(JSON.stringify(item.low))
                   ,subitems:[]
@@ -100,6 +106,9 @@ register.forEach((notation,index)=>{
                   expand_tier(tier,newitem,JSON.stringify(append[append.length-1].expr)===JSON.stringify(newitem.expr)?append:newitem.subitems)
                   tier>1&&expand_tier(tier-1,newitem.subitems.length?newitem.subitems[newitem.subitems.length-1]:newitem,newitem.subitems)
                }
+			   }catch(e){
+				   if(e!==0)throw e
+			   }
             }
             ,extras=new Set()
             ,parentsubs = this.$parent.subitems

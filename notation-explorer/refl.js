@@ -225,6 +225,7 @@ let expr_FS=(x)=>{
 	throw Exception()
 }
 let to_str=(x)=>{
+	if(x===undefined)return 'undefined'
 	if(x instanceof Array && x.length==3){
 		let y=x.map(to_str)
 		return (x[0]===0?'':y[0])+'('+y[1]+','+y[2]+')'
@@ -259,6 +260,7 @@ let to_str2=(x)=>{
 	return ''+x
 }
 let to_str1=(x)=>{
+	if(x===undefined)return 'undefined'
 	let n=to_num(x)
 	if(n!==-1)return ''+n
 	if(x instanceof Array && x.length==3){
@@ -276,10 +278,16 @@ let to_str1=(x)=>{
 	return ''+x
 }
 let refl_is_lim=(x,n)=>{
-	return cmp(w,expr_FS(x).dom)===0
+	let dom=expr_FS(x).dom
+	return cmp(w,dom)===0 || cmp(one,dom)===0
 }
 let refl_FS=(x,n)=>{
-	return expr_FS(x).fs(iter((t)=>expr(0,0,t),n,0))
+	let x_=expr_FS(x)
+	if(cmp(one,x_.dom)===0){
+		if(n===0)return x_.fs(0)
+		return undefined
+	}
+	return x_.fs(iter((t)=>expr(0,0,t),n,0))
 }
 register.push({
    id:'refl_Tree'
