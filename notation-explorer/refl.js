@@ -231,6 +231,50 @@ let to_str=(x)=>{
 	}
 	return ''+x
 }
+let to_num=(x)=>{
+	if(x instanceof Array && x.length==3){
+		if(x[0]===0 && x[1]===0){
+			let c=to_num(x[2])
+			if(c===-1)return -1
+			return c+1
+		}
+	}
+	if(x===0)return 0
+	return -1
+}
+let to_str2=(x)=>{
+	if(x instanceof Array && x.length==3){
+		let y=[to_str2(x[0]),to_str2(x[1]),to_str1(x[2])]
+		let y2=to_num(x[2])
+		let ret2=
+		(x[1]===0?'':y[1]=='1'?'A':('A<sup>'+y[1]+'</sup>'))+
+		(y2!==-1?(y2===0?'':y2+1):y[2])
+		if(ret2=='')ret2='1'
+		let ret=
+		(x[0]===0?'':y[0]+'+')+
+		ret2
+		//console.log(to_str(x)+" to_str2 "+ret)
+		return ret
+	}
+	return ''+x
+}
+let to_str1=(x)=>{
+	let n=to_num(x)
+	if(n!==-1)return ''+n
+	if(x instanceof Array && x.length==3){
+		let y=[to_str1(x[0]),to_str2(x[1]),to_str1(x[2])]
+		let y2=to_num(x[2])
+		let ret=
+		(x[0]===0?'':y[0])+
+		'{'+
+		y[1]+
+		'}'+
+		(y2===0?'':('<sup>'+(y2!==-1?(y2+1):y[2])+'</sup>'))
+		//console.log(to_str(x)+" to_str1 "+ret)
+		return ret
+	}
+	return ''+x
+}
 let refl_is_lim=(x,n)=>{
 	return cmp(w,expr_FS(x).dom)===0
 }
@@ -240,7 +284,19 @@ let refl_FS=(x,n)=>{
 register.push({
    id:'refl_Tree'
    ,name:'refl Tree'
-   ,display:to_str
+   ,display:(n)=>{return ''+to_str1(n)}
+   ,able:refl_is_lim
+   ,compare:cmp
+   ,FS:refl_FS
+   ,init:()=>([
+      {expr:Infinity,low:[0],subitems:[]}
+      ,{expr:0,low:[0],subitems:[]}
+   ])
+})
+register.push({
+   id:'refl_Tree_Raw'
+   ,name:'refl Tree(Raw)'
+   ,display:(n)=>{return ''+to_str(n)}
    ,able:refl_is_lim
    ,compare:cmp
    ,FS:refl_FS
