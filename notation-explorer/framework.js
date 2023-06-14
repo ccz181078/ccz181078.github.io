@@ -11,7 +11,7 @@
       current_tab:0
       ,FS_shown:register.map(()=>4)
       ,extra_FS:register.map(()=>0)
-      ,tier:register.map(()=>1)
+      ,tier:register.map(()=>0)
       ,datasets:register.map(notation=>notation.init())
    })
    ,computed:{

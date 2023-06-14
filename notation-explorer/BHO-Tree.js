@@ -181,7 +181,7 @@ let pOO_FS=(()=>{
 	 return []
   }
 })()
-register.push({
+/*register.push({
    id:'pOO_Tree'
    ,name:'??? Tree'
    ,display:a=>pOO_tree_display_expr(a)
@@ -192,7 +192,7 @@ register.push({
       {expr:Infinity,low:[[]],subitems:[]}
       ,{expr:[],low:[[]],subitems:[]}
    ])
-})
+})*/
 register.push({
    id:'BHO_Tree'
    ,name:'BHO Tree'
