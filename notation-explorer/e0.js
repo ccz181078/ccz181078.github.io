@@ -10,6 +10,12 @@ let flat=(x)=>{
 	return y
 }
 let cmp=(m1,m2)=>{
+	if(m1===Infinity){
+		if(m2===Infinity)return 0
+		return 1
+	}else if(m2===Infinity){
+		return -1
+	}
 	m1=flat(m1)
 	m2=flat(m2)
 	for(let i=0;i<Math.min(m1.length,m2.length);++i){
