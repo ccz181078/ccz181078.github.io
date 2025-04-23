@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sequence Prediction Test</title>
+    <style>
+		.monospace {
+			font-family: monospace;
+		}
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+        }
+        #display0 {
+            padding: 10px;
+            font-size: 1.2em;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+        }
+        #display {
+            padding: 10px;
+            font-size: 1.2em;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <button onclick="appendNumber(0)">0</button>
+        <button onclick="appendNumber(1)">1</button>
+    </div>
+    <textarea id="display0" readonly rows="4" cols="50"></textarea>
+    <textarea id="display" readonly rows="7" cols="50"></textarea>
+	This is a sequence prediction test. <br/>
+	There is a 01 sequence generated in an unknown way. <br/>
+	Click 0 or 1 to predict the next position of the sequence. <br/>
+	After each prediction, you can see whether the prediction is correct. <br/>
+	<b>Your goal is to maximize your score, which is calculated by: <br/>
+	(number of predictions + 10) / (number of errors + 9).</b>
+
+    <script>
+		function rndbit(){return Math.random()<0.5?0:1;}
+		function rndbits(n){
+			let ret=new Array();
+			for(let i=0;i<n;++i){
+				ret[i]=rndbit();
+			}
+			return ret;
+		}
+		function shift1(a){
+			let a0=a[0];
+			for(let i=1;i<a.length;++i){
+				a[i-1]=a[i];
+			}
+			a[a.length-1]=a0;
+		}
+		let state={
+			s:new Array(),
+			T:Math.floor(Math.random()*1e9),
+		};
+		let N=20;
+		for(let i=0,n=1;i<N;++i,n=n*2){
+			state.s[i]=rndbits(n);
+		}
+		function step(){
+			state.T+=1;
+			let v=state.T;
+			for(let i=0;i<N-1;++i){
+				state.s[i][0]^=state.s[i+1][0];
+				shift1(state.s[i]);
+				if(v%3!=0)break;
+				v/=3;
+			}
+			return state.s[0][0];
+		}
+		let seq='';
+		let user_seq='';
+		let n_tot=0;
+		let n_fail=0;
+		let freq=new Array();
+		let last_fail=0;
+		for(let i=0;i<16;++i)freq[i]=0;
+        function appendNumber0(v0) {
+            const display0 = document.getElementById('display0');
+            const display = document.getElementById('display');
+			let v=step();
+			seq+=v;
+			user_seq+=v0;
+			n_tot+=1;
+			last_fail=(v!=v0);
+			if(last_fail)n_fail+=1;
+			freq[state.s[2][0]*8+state.s[2][1]*4+state.s[2][2]*2+state.s[2][3]]+=1;
+			return v;
+		}
+		/*
+		let v0_=0;
+		let v1_=0;
+		for(let i=0;i<1000000;++i){
+			let v2_=appendNumber0(v0_);
+			v0_=v1_;
+			v1_=v2_;
+		}
+		for(let i=0;i<1;++i)appendNumber(0);*/
+		function updateDisplay(){
+			display0.value = user_seq;
+            display.value =
+				seq+
+				('\nError rate: '+n_fail+'/'+n_tot+' = '+(Math.round(n_fail*1e5/n_tot)/1e3)+'%')+
+				('\nScore: '+(n_tot+10)+'/'+(n_fail+9)+' = '+Math.round((n_tot+10)/(n_fail+9)*1e3)/1e3)+
+				('\nLast: '+(last_fail?'error':'correct'));
+				/*+
+				('\n'+state.T)+
+				('\n'+freq)+
+				('\n'+state.s[0])+
+				('\n'+state.s[1])+
+				('\n'+state.s[2])+
+				('\n'+state.s[3])+
+				('\n'+state.s[4]);*/
+            display.scrollTop = display.scrollHeight;
+		}
+		function appendNumber(v0){
+			appendNumber0(v0);
+			updateDisplay();
+        }
+		updateDisplay();
+    </script>
+</body>
+</html>
